@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b0d18">
+<title>VARG-ON — Personal Intelligence</title>
+
+<style>
+:root{
+--bg:#0b0d18;--panel:#111522;--panel2:#171c2c;
+--border:#ffffff16;--text:#f4f3fb;--muted:#9298ad;
+--purple:#9b83ff;--cyan:#63d9df;
+--gradient:linear-gradient(120deg,#a18aff,#5dd9df);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;height:100dvh;overflow:hidden}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer;color:inherit}
+.app{height:100dvh;display:flex}
+.sidebar{width:265px;flex-shrink:0;background:#101321;border-right:1px solid var(--border);padding:20px 15px;display:flex;flex-direction:column;z-index:5;transition:.25s}
+.brand{display:flex;align-items:center;gap:12px;padding:4px 5px 25px}
+.brand-logo{width:43px;height:43px;border-radius:14px;display:grid;place-items:center;background:var(--gradient);color:#101321;font-size:23px;font-weight:900}
+.brand h2{margin:0;font-size:19px;letter-spacing:2px}
+.brand small{color:var(--muted);font-size:9px;letter-spacing:1.4px}
+.new-chat{width:100%;padding:13px;border:1px solid #a18aff66;background:#987cff22;border-radius:12px;text-align:left;font-weight:650}
+.new-chat span{font-size:20px;margin-right:9px}
+.section-label{color:#737b93;font-size:10px;letter-spacing:1.6px;margin:27px 10px 10px}
+.nav-btn,.history-item{width:100%;display:flex;align-items:center;gap:12px;border:0;background:transparent;color:#aeb4c8;padding:11px 12px;border-radius:10px;text-align:left;font-size:13px;margin:2px 0}
+.nav-btn:hover,.history-item:hover{background:#ffffff0a;color:white}
+.nav-btn.active,.history-item.active{background:#9580ff1c;color:#c4b5ff}
+.history-list{overflow:auto;flex:1}
+.history-item{font-size:12px;white-space:nowrap;overflow:hidden}
+.sidebar-bottom{border-top:1px solid var(--border);padding-top:12px}
+.profile{display:flex;align-items:center;gap:10px;padding:12px 5px 2px}
+.avatar{width:35px;height:35px;border-radius:50%;display:grid;place-items:center;background:var(--gradient);color:#111;font-weight:800}
+.profile small{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{height:65px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 22px;border-bottom:1px solid var(--border);background:#0d101bef}
+.top-left,.top-right{display:flex;align-items:center;gap:12px}
+.icon-btn{width:39px;height:39px;border:1px solid var(--border);border-radius:11px;background:#ffffff06;font-size:17px}
+.connection{font-size:11px;color:var(--muted);display:flex;gap:8px;align-items:center}
+.dot{width:7px;height:7px;background:#e7b65b;border-radius:50%}
+.dot.connected{background:#50d6a0}
+.mobile-brand{display:none;font-weight:800;letter-spacing:1px}
+.content{flex:1;overflow-y:auto;min-width:0}
+.welcome{max-width:850px;margin:auto;padding:65px 25px 35px;text-align:center}
+.orb{width:110px;height:110px;border-radius:50%;margin:0 auto 28px;position:relative;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#d4c7ff,#947aff 35%,#27365c 70%,#111522);box-shadow:0 0 65px #987cff55}
+.orb:before,.orb:after{content:"";position:absolute;border:1px solid #a895ff66;border-radius:50%;inset:-13px;transform:rotate(-25deg) scaleX(1.4)}
+.orb:after{inset:-23px;transform:rotate(55deg) scaleX(1.5);border-color:#5dd9df55}
+.orb b{font-size:43px;color:#17162a}
+.eyebrow{font-size:10px;letter-spacing:3px;color:var(--cyan);font-weight:700}
+.welcome h1{font-size:clamp(30px,5vw,48px);margin:15px 0 12px;letter-spacing:-1.5px}
+.welcome h1 span{background:var(--gradient);background-clip:text;color:transparent}
+.description{color:var(--muted);font-size:14px;line-height:1.8;max-width:510px;margin:auto}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:38px auto 0;max-width:650px;text-align:left}
+.suggestion{border:1px solid var(--border);background:linear-gradient(140deg,#ffffff09,#ffffff02);border-radius:15px;padding:18px;min-height:105px;text-align:left;transition:.2s}
+.suggestion:hover{border-color:#a18aff99;transform:translateY(-2px)}
+.suggestion .symbol{font-size:21px;color:var(--cyan);display:block;margin-bottom:10px}
+.suggestion strong{display:block;font-size:13px}
+.suggestion small{display:block;color:var(--muted);margin-top:5px;font-size:11px}
+
+/* CHAT MESSAGE LAYOUT FIX */
+.chat-messages{
+max-width:850px;
+width:100%;
+margin:0 auto;
+padding:25px;
+min-width:0;
+}
+.message{
+display:flex;
+gap:12px;
+margin:20px 0;
+align-items:flex-start;
+width:100%;
+min-width:0;
+}
+.message.user{flex-direction:row-reverse}
+.message-avatar{
+width:32px;
+height:32px;
+flex:0 0 32px;
+border-radius:11px;
+display:grid;
+place-items:center;
+background:#9b83ff22;
+color:#c8baff;
+font-weight:800;
+}
+.message.user .message-avatar{background:#63d9df22;color:var(--cyan)}
+.message-content{
+flex:1 1 0;
+min-width:0;
+max-width:calc(100% - 44px);
+}
+.bubble{
+display:block;
+width:fit-content;
+min-width:0;
+max-width:100%;
+padding:13px 16px;
+border-radius:15px;
+background:var(--panel2);
+border:1px solid var(--border);
+font-size:14px;
+line-height:1.75;
+white-space:pre-wrap;
+overflow-wrap:anywhere;
+word-break:normal;
+}
+.message.user .bubble{background:#8270d923;border-color:#a18aff33}
+.message-time{font-size:10px;color:var(--muted);margin-top:6px}
+
+.composer-area{padding:10px 22px 17px;flex-shrink:0;background:linear-gradient(transparent,#0b0d18 20%)}
+.composer{max-width:850px;margin:auto;background:#151a29;border:1px solid #ffffff18;border-radius:17px;box-shadow:0 15px 50px #0005;padding:12px 15px 10px}
+.composer-top{display:flex;justify-content:space-between;align-items:center}
+.mode{background:#ffffff08;border:1px solid var(--border);border-radius:9px;padding:7px 10px;color:#c5b8ff;font-size:11px;outline:none}
+.mode option{background:#171c2c;color:white}
+.tools{display:flex;gap:7px}
+.tool{border:0;background:transparent;color:#9ba2b8;width:31px;height:30px;border-radius:8px;font-size:17px}
+#messageInput{width:100%;resize:none;min-height:52px;max-height:150px;border:0;outline:0;background:transparent;color:var(--text);padding:15px 3px 8px;font-size:16px;line-height:1.5;white-space:pre-wrap;overflow-wrap:break-word}
+#messageInput::placeholder{color:#777f96}
+.composer-bottom{display:flex;justify-content:space-between;align-items:center}
+.hint{font-size:10px;color:#747c92}
+.send{width:38px;height:38px;border:0;border-radius:12px;background:var(--gradient);color:#101321;font-size:22px;font-weight:800}
+.send:disabled{opacity:.45}
+.footer-note{text-align:center;color:#606980;font-size:10px;margin-top:11px}
+.footer-note span{color:var(--cyan);padding:0 5px}
+.page{max-width:850px;margin:auto;padding:40px 25px}
+.page h1{font-size:28px;margin:0 0 8px}
+.page-sub{color:var(--muted);font-size:13px;margin-bottom:28px}
+.panel{border:1px solid var(--border);background:var(--panel);padding:20px;border-radius:15px;margin:13px 0}
+.panel h3{font-size:14px;margin:0 0 7px}
+.panel p{color:var(--muted);font-size:12px;line-height:1.6}
+.setting-row{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:14px 0;border-top:1px solid var(--border);font-size:13px}
+.setting-row input,.setting-row select,.setting-input{background:#0d1120;border:1px solid var(--border);color:var(--text);border-radius:9px;padding:10px;max-width:55%}
+.setting-row small{display:block;color:var(--muted);font-size:11px;margin-top:4px}
+.primary{background:var(--gradient);color:#111326;border:0;border-radius:9px;padding:11px 17px;font-weight:750;font-size:12px}
+.secondary{background:#ffffff0a;border:1px solid var(--border);border-radius:9px;padding:10px 15px;font-size:12px}
+.memory-empty{text-align:center;padding:35px 10px;color:var(--muted);font-size:13px}
+.hidden{display:none!important}
+.toast{position:fixed;bottom:25px;left:50%;transform:translate(-50%,20px);background:#252b3d;border:1px solid var(--border);padding:11px 17px;border-radius:10px;font-size:12px;opacity:0;pointer-events:none;transition:.25s;z-index:30}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.overlay{display:none}
+.light{--bg:#f4f5fb;--panel:#fff;--panel2:#f0f1fa;--text:#202338;--muted:#6c7186;--border:#20233818}
+.light .sidebar{background:#fff}
+.light .topbar{background:#ffffffed}
+.light .composer{background:#fff}
+.light .mode option{background:#fff;color:#222}
+.light .setting-row input,.light .setting-row select,.light .setting-input{background:#f5f5fa;color:#222}
+
+@media(max-width:760px){
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:280px;transform:translateX(-105%);box-shadow:0 15px 50px #0005}
+.sidebar.open{transform:translateX(0)}
+.overlay.show{display:block;position:fixed;inset:0;background:#0009;z-index:4}
+.mobile-brand{display:flex;align-items:center;gap:8px}
+.topbar{height:60px;padding:0 13px}
+.connection{font-size:9px}
+.welcome{padding:55px 17px 25px}
+.cards{gap:9px;margin-top:28px}
+.suggestion{padding:14px;min-height:100px}
+.composer-area{padding:8px 10px 12px}
+.chat-messages{padding:15px}
+.page{padding:30px 17px}
+}
+@media(max-width:390px){
+.connection{display:none}
+.welcome h1{font-size:30px}
+.cards{grid-template-columns:1fr}
+.suggestion{min-height:80px}
+.orb{width:90px;height:90px}
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<aside class="sidebar" id="sidebar">
+<div class="brand">
+<div class="brand-logo">V</div>
+<div><h2>VARG-ON</h2><small>PERSONAL INTELLIGENCE</small></div>
+</div>
+
+<button class="new-chat" id="newChat"><span>＋</span> New conversation</button>
+
+<div class="section-label">WORKSPACE</div>
+<button class="nav-btn active" data-page="home">⌂ &nbsp; Home</button>
+<button class="nav-btn" data-page="history">◷ &nbsp; Conversations</button>
+<button class="nav-btn" data-page="memory">◈ &nbsp; Memory</button>
+<button class="nav-btn" data-page="research">⌕ &nbsp; Research</button>
+
+<div class="section-label">RECENT CONVERSATIONS</div>
+<div class="history-list" id="historyList"></div>
+
+<div class="sidebar-bottom">
+<button class="nav-btn" data-page="settings">⚙ &nbsp; Settings</button>
+<div class="profile">
+<div class="avatar">A</div>
+<div><strong style="font-size:12px">Arnob</strong><small>Private workspace</small></div>
+</div>
+</div>
+</aside>
+
+<div class="overlay" id="overlay"></div>
+
+<main class="main">
+<header class="topbar">
+<div class="top-left">
+<button class="icon-btn" id="menuBtn">☰</button>
+<div class="mobile-brand">◈ VARG-ON</div>
+</div>
+<div class="connection"><span class="dot" id="statusDot"></span><span id="statusText">Demo mode</span></div>
+<div class="top-right">
+<button class="icon-btn" id="themeBtn">◐</button>
+<button class="icon-btn" data-open-settings>⚙</button>
+</div>
+</header>
+
+<section class="content" id="content">
+
+<div id="homePage">
+<div class="welcome" id="welcome">
+<div class="orb"><b>V</b></div>
+<div class="eyebrow">YOUR PERSONAL INTELLIGENCE</div>
+<h1>Intelligence, <span>with identity.</span></h1>
+<p class="description">A private space to think, explore, learn and create. Welcome to VARG-ON.</p>
+<div class="cards">
+<button class="suggestion" data-prompt="Help me understand a difficult topic."><span class="symbol">✧</span><strong>Learn something</strong><small>Understand complex ideas</small></button>
+<button class="suggestion" data-prompt="Let's explore a scientific question."><span class="symbol">⌬</span><strong>Explore ideas</strong><small>Science, logic and discovery</small></button>
+<button class="suggestion" data-prompt="Help me plan a new project."><span class="symbol">◇</span><strong>Build something</strong><small>Turn ideas into projects</small></button>
+<button class="suggestion" data-prompt="Let's have a conversation."><span class="symbol">☼</span><strong>Just talk</strong><small>Conversations without limits</small></button>
+</div>
+</div>
+<div class="chat-messages" id="messages"></div>
+</div>
+
+<div class="page hidden" id="historyPage">
+<h1>Conversations</h1><div class="page-sub">Your saved conversations.</div>
+<div id="historyPageList"></div>
+</div>
+
+<div class="page hidden" id="memoryPage">
+<h1>Memory</h1><div class="page-sub">VARG-ON's memory workspace.</div>
+<div class="panel"><h3>Personal memory</h3><p>Preferences and user context will eventually be stored here.</p><div class="memory-empty">◈<br><br>No memory records yet.</div></div>
+<div class="panel"><h3>Knowledge memory</h3><p>Validated information and research notes will be organized here.</p></div>
+</div>
+
+<div class="page hidden" id="researchPage">
+<h1>Research workspace</h1><div class="page-sub">A dedicated place for investigation and analysis.</div>
+<div class="panel"><h3>Research engine</h3><p>Web search and source verification will be available after connecting the backend.</p><button class="primary" id="researchChat">Start research</button></div>
+<div class="panel"><h3>Verification principles</h3><p>Distinguish facts, assumptions and hypotheses. Check source quality, dates and corroboration.</p></div>
+</div>
+
+<div class="page hidden" id="settingsPage">
+<h1>Settings</h1><div class="page-sub">Configure your personal workspace.</div>
+<div class="panel">
+<h3>Appearance</h3>
+<div class="setting-row"><div><strong>Light theme</strong><small>Switch appearance</small></div><input type="checkbox" id="lightToggle"></div>
+</div>
+<div class="panel">
+<h3>Intelligence preferences</h3>
+<div class="setting-row"><div><strong>Default thinking mode</strong><small>Choose your preferred mode</small></div>
+<select id="defaultMode"><option value="balanced">Balanced</option><option value="lightning">Lightning Fast</option><option value="complex">Complex</option></select></div>
+</div>
+<div class="panel">
+<h3>Backend connection</h3><p>Connect your future Python backend.</p>
+<div class="setting-row"><div><strong>API base URL</strong><small>Example: http://localhost:8000</small></div><input class="setting-input" id="apiUrl" placeholder="http://localhost:8000"></div>
+<div class="setting-row"><div><strong>Connection status</strong><small id="backendStatus">Not connected</small></div><button class="secondary" id="testConnection">Test</button></div>
+<button class="primary" id="saveSettings">Save settings</button>
+</div>
+<div class="panel">
+<h3>Local data</h3><p>Conversation history is saved in this browser.</p>
+<button class="secondary" id="exportData">Export conversations</button>
+<button class="secondary" id="clearData">Clear conversations</button>
+</div>
+<div class="panel"><h3>About VARG-ON</h3><p>Personal Intelligence · Frontend Prototype 0.3</p></div>
+</div>
+</section>
+
+<footer class="composer-area" id="composerArea">
+<div class="composer">
+<div class="composer-top">
+<select class="mode" id="mode">
+<option value="balanced">✧ Balanced</option>
+<option value="lightning">⚡ Lightning Fast</option>
+<option value="complex">◈ Complex</option>
+</select>
+<div class="tools">
+<button class="tool" id="attachBtn">＋</button>
+<button class="tool" id="voiceBtn">◉</button>
+<input type="file" id="fileInput" hidden>
+</div>
+</div>
+
+<textarea id="messageInput" rows="1" placeholder="Message VARG-ON..." enterkeyhint="send" autocomplete="off" autocorrect="on" spellcheck="true"></textarea>
+
+<div class="composer-bottom">
+<div class="hint">✦ VARG-ON can make mistakes. Verify important information.</div>
+<button class="send" id="sendBtn" type="button">↑</button>
+</div>
+</div>
+<div class="footer-note">VARG-ON <span>•</span> Private by design</div>
+</footer>
+</main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(()=>{
+"use strict";
+
+const $=id=>document.getElementById(id);
+
+const state={
+ chats:[],activeId:null,page:"home",busy:false,
+ apiUrl:localStorage.getItem("vargon_api")||"",
+ mode:localStorage.getItem("vargon_mode")||"balanced"
+};
+
+function toast(message){
+ const el=$("toast");
+ el.textContent=message;
+ el.classList.add("show");
+ clearTimeout(toast.timer);
+ toast.timer=setTimeout(()=>el.classList.remove("show"),2500);
+}
+
+function save(){
+ localStorage.setItem("vargon_chats",JSON.stringify(state.chats));
+ localStorage.setItem("vargon_active",state.activeId||"");
+}
+
+function load(){
+ try{
+ state.chats=JSON.parse(localStorage.getItem("vargon_chats")||"[]");
+ if(!Array.isArray(state.chats))state.chats=[];
+ state.activeId=localStorage.getItem("vargon_active")||null;
+ }catch(e){state.chats=[];state.activeId=null;}
+
+ state.apiUrl=localStorage.getItem("vargon_api")||"";
+ state.mode=localStorage.getItem("vargon_mode")||"balanced";
+ $("apiUrl").value=state.apiUrl;
+ $("mode").value=state.mode;
+ $("defaultMode").value=state.mode;
+ if(!state.chats.some(c=>c.id===state.activeId))state.activeId=null;
+}
+
+function activeChat(){
+ return state.chats.find(c=>c.id===state.activeId)||null;
+}
+
+function newChat(){
+ const chat={
+ id:"chat_"+Date.now()+"_"+Math.random().toString(36).slice(2,7),
+ title:"New conversation",messages:[],created:Date.now()
+ };
+ state.chats.unshift(chat);
+ state.activeId=chat.id;
+ save();render();showPage("home");closeSidebar();
+ $("messageInput").focus();
+}
+
+function renderHistory(){
+ const list=$("historyList"),full=$("historyPageList");
+ list.innerHTML="";full.innerHTML="";
+
+ if(!state.chats.length){
+ list.innerHTML='<div style="padding:10px;color:var(--muted);font-size:11px">No conversations yet</div>';
+ full.innerHTML='<div class="panel"><p>No saved conversations yet. Start a new chat to begin.</p></div>';
+ return;
+ }
+
+ state.chats.forEach(chat=>{
+ const btn=document.createElement("button");
+ btn.className="history-item"+(chat.id===state.activeId?" active":"");
+ btn.textContent="◷  "+chat.title;
+ btn.onclick=()=>openChat(chat.id);
+ list.appendChild(btn);
+
+ const row=document.createElement("div");
+ row.className="panel";
+ row.style.display="flex";
+ row.style.alignItems="center";
+ row.style.justifyContent="space-between";
+ row.style.gap="10px";
+
+ const name=document.createElement("button");
+ name.className="nav-btn";name.style.flex="1";
+ name.textContent="◷  "+chat.title;
+ name.onclick=()=>openChat(chat.id);
+
+ const del=document.createElement("button");
+ del.className="secondary";del.textContent="Delete";
+ del.onclick=()=>{
+ state.chats=state.chats.filter(c=>c.id!==chat.id);
+ if(state.activeId===chat.id)state.activeId=null;
+ save();render();
+ };
+ row.append(name,del);full.appendChild(row);
+ });
+}
+
+function renderMessages(){
+ const box=$("messages");
+ box.innerHTML="";
+ const chat=activeChat();
+
+ $("welcome").classList.toggle("hidden",!!chat&&chat.messages.length>0);
+ if(!chat)return;
+
+ chat.messages.forEach(msg=>{
+ const row=document.createElement("div");
+ row.className="message "+(msg.role==="user"?"user":"assistant");
+
+ const avatar=document.createElement("div");
+ avatar.className="message-avatar";
+ avatar.textContent=msg.role==="user"?"A":"V";
+
+ const wrap=document.createElement("div");
+ wrap.className="message-content";
+
+ const bubble=document.createElement("div");
+ bubble.className="bubble";
+ bubble.textContent=msg.content;
+
+ const time=document.createElement("div");
+ time.className="message-time";
+ time.textContent=new Date(msg.time).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+
+ wrap.append(bubble,time);
+ row.append(avatar,wrap);
+ box.appendChild(row);
+ });
+ $("content").scrollTop=$("content").scrollHeight;
+}
+
+function render(){renderHistory();renderMessages();$("mode").value=state.mode;}
+
+function openChat(id){
+ state.activeId=id;save();showPage("home");render();closeSidebar();
+}
+
+function showPage(page){
+ state.page=page;
+ ["home","history","memory","research","settings"].forEach(id=>{
+ $(id+"Page").classList.toggle("hidden",id!==page);
+ });
+ document.querySelectorAll(".nav-btn[data-page]").forEach(btn=>{
+ btn.classList.toggle("active",btn.dataset.page===page);
+ });
+ $("composerArea").classList.toggle("hidden",page!=="home");
+ $("content").scrollTop=0;
+ if(page==="history")renderHistory();
+}
+
+function closeSidebar(){
+ $("sidebar").classList.remove("open");
+ $("overlay").classList.remove("show");
+}
+
+function toggleSidebar(){
+ $("sidebar").classList.toggle("open");
+ $("overlay").classList.toggle("show");
+}
+
+function addMessage(role,content){
+ const chat=activeChat();if(!chat)return;
+ chat.messages.push({role,content,time:Date.now()});
+ if(chat.title==="New conversation"&&role==="user"){
+ chat.title=content.slice(0,34);
+ }
+ save();render();
+}
+
+async function sendMessage(){
+ const input=$("messageInput");
+ const message=input.value.trim();
+ if(!message||state.busy)return;
+
+ if(!activeChat()){
+ const chat={
+ id:"chat_"+Date.now()+"_"+Math.random().toString(36).slice(2,7),
+ title:"New conversation",messages:[],created:Date.now()
+ };
+ state.chats.unshift(chat);state.activeId=chat.id;
+ }
+
+ input.value="";
+ input.style.height="auto";
+ addMessage("user",message);
+
+ state.busy=true;$("sendBtn").disabled=true;
+
+ try{
+ if(state.apiUrl){
+ const response=await fetch(state.apiUrl.replace(/\/$/,"")+"/chat",{
+ method:"POST",
+ headers:{"Content-Type":"application/json"},
+ body:JSON.stringify({message,mode:state.mode,conversation_id:state.activeId})
+ });
+ if(!response.ok)throw new Error("Backend returned "+response.status);
+ const data=await response.json();
+ const answer=data.response||data.answer||data.message;
+ if(!answer)throw new Error("Response format not recognized");
+ addMessage("assistant",String(answer));
+ }else{
+ addMessage("assistant",
+ "VARG-ON frontend is working successfully. ✦\n\nYour message has been saved locally. The intelligence backend is not connected yet, so I cannot generate an AI response at this stage.\n\nNext step: connect the Python backend."
+ );
+ }
+ }catch(error){
+ addMessage("assistant","Connection error: "+error.message+"\n\nPlease check your backend URL and server.");
+ }finally{
+ state.busy=false;$("sendBtn").disabled=false;
+ }
+}
+
+/* A single Enter handler prevents duplicate submissions. */
+$("messageInput").addEventListener("keydown",e=>{
+ if(e.key==="Enter"&&!e.shiftKey){
+ if(e.isComposing||e.keyCode===229)return;
+ e.preventDefault();
+ sendMessage();
+ }
+});
+
+function setTheme(light){
+ document.body.classList.toggle("light",light);
+ $("lightToggle").checked=light;
+ localStorage.setItem("vargon_theme",light?"light":"dark");
+}
+
+function saveSettings(){
+ state.apiUrl=$("apiUrl").value.trim().replace(/\/$/,"");
+ state.mode=$("defaultMode").value;
+ localStorage.setItem("vargon_api",state.apiUrl);
+ localStorage.setItem("vargon_mode",state.mode);
+ $("mode").value=state.mode;
+ toast("Settings saved successfully");
+}
+
+async function testConnection(){
+ const url=$("apiUrl").value.trim().replace(/\/$/,"");
+ if(!url){toast("Enter your backend URL first");return;}
+ $("backendStatus").textContent="Checking...";
+ try{
+ const r=await fetch(url+"/health");
+ if(!r.ok)throw new Error();
+ $("backendStatus").textContent="Connected";
+ $("statusText").textContent="Backend connected";
+ $("statusDot").classList.add("connected");
+ toast("Connection successful");
+ }catch(e){
+ $("backendStatus").textContent="Connection failed";
+ $("statusText").textContent="Demo mode";
+ $("statusDot").classList.remove("connected");
+ toast("Could not connect to backend");
+ }
+}
+
+function exportData(){
+ const blob=new Blob([JSON.stringify(state.chats,null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url;a.download="vargon-conversations.json";a.click();
+ URL.revokeObjectURL(url);
+}
+
+function clearData(){
+ if(!confirm("Delete all saved conversations?"))return;
+ state.chats=[];state.activeId=null;save();render();toast("Conversations cleared");
+}
+
+// Navigation
+document.querySelectorAll("[data-page]").forEach(btn=>{
+ btn.addEventListener("click",()=>{showPage(btn.dataset.page);closeSidebar();});
+});
+document.querySelectorAll("[data-open-settings]").forEach(btn=>{
+ btn.onclick=()=>showPage("settings");
+});
+
+$("newChat").onclick=newChat;
+$("menuBtn").onclick=toggleSidebar;
+$("overlay").onclick=closeSidebar;
+$("sendBtn").onclick=sendMessage;
+
+document.querySelectorAll("[data-prompt]").forEach(btn=>{
+ btn.onclick=()=>{
+ if(!activeChat())newChat();
+ $("messageInput").value=btn.dataset.prompt;
+ $("messageInput").focus();
+ };
+});
+
+$("mode").onchange=e=>{
+ state.mode=e.target.value;
+ localStorage.setItem("vargon_mode",state.mode);
+};
+
+$("themeBtn").onclick=()=>setTheme(!document.body.classList.contains("light"));
+$("lightToggle").onchange=e=>setTheme(e.target.checked);
+$("saveSettings").onclick=saveSettings;
+$("testConnection").onclick=testConnection;
+$("exportData").onclick=exportData;
+$("clearData").onclick=clearData;
+
+$("researchChat").onclick=()=>{
+ newChat();
+ $("messageInput").value="I want to start a research project.";
+};
+
+$("attachBtn").onclick=()=>$("fileInput").click();
+$("fileInput").onchange=e=>{
+ const file=e.target.files[0];
+ if(file)toast("Selected: "+file.name+" — upload requires backend support");
+};
+
+$("voiceBtn").onclick=()=>{
+ const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SpeechRecognition){toast("Voice input is not supported by this browser");return;}
+ const recognition=new SpeechRecognition();
+ recognition.lang="en-US";
+ recognition.onresult=e=>{$("messageInput").value=e.results[0][0].transcript;};
+ recognition.onerror=()=>toast("Voice recognition failed");
+ recognition.start();
+ toast("Listening...");
+};
+
+load();render();
+setTheme(localStorage.getItem("vargon_theme")==="light");
+$("mode").value=state.mode;
+
+})();
+</script>
+</body>
+</html>
